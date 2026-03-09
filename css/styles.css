@@ -1,0 +1,192 @@
+/* --- CONFIGURAÇÕES GERAIS --- */
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --fundo: #FFFBEB; 
+  --cor-principal: #3498db;
+  --Destaque--botoes: #EC4899;
+  --apoio--icones: #10B981;
+  --texto: #451A03;
+}
+
+body {
+  background-color: var(--fundo);
+  color: var(--texto);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+section {
+  padding: 160px 0;
+}
+
+/* --- HOVER DE SOMBREAMENTO GLOBAL --- */
+.nav-link:hover, 
+.botao-cta:hover, 
+.card-tech:hover, 
+.projeto-card:hover, 
+.btn-projeto:hover,
+.btn-outline-primary:hover,
+.foto-perfil:hover,
+.btn-cv:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  transition: all 0.3s ease;
+}
+
+/* --- NAVBAR --- */
+.custom-nav {
+  background-color: var(--cor-principal) !important;
+  padding: 12px 0;
+}
+
+.navbar .navbar-brand img {
+  height: 55px;
+  width: auto;
+  transition: 0.3s;
+}
+
+.navbar .navbar-brand img:hover {
+  border-radius: 6px;
+  box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.521);
+  padding: 3px;
+}
+
+.custom-nav .nav-link {
+  color: white !important;
+  font-weight: 500;
+  margin-left: 20px;
+}
+
+/* --- HERO SECTION --- */
+.titulo-principal {
+  color: var(--cor-principal);
+  font-size: 3.8rem;
+  font-weight: 800;
+}
+
+.subtitulo {
+  font-size: 1.4rem;
+  margin-bottom: 25px;
+}
+
+.botao-cta {
+  background-color: var(--Destaque--botoes);
+  color: white;
+  border-radius: 50px;
+  padding: 14px 35px;
+  border: none;
+  font-weight: bold;
+}
+
+.foto-perfil {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 50%;
+  border: 8px solid var(--cor-principal);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* --- BOTÃO CURRÍCULO (ATUALIZADO PARA ROSA) --- */
+.btn-cv {
+    background-color: var(--Destaque--botoes); /* Rosa da paleta */
+    color: white;
+    border-radius: 50px;
+    padding: 15px 40px; /* Um pouco maior para dar mais destaque */
+    font-weight: bold;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s ease;
+}
+
+.btn-cv:hover {
+    background-color: #d13d88; /* Um rosa mais escuro para o hover */
+    color: white;
+}
+
+/* --- CARDS DE TECNOLOGIA --- */
+.card-tech {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-tech i { font-size: 60px; margin-bottom: 15px; }
+
+.card-tech.active { background-color: var(--cor-principal); color: white; }
+
+.card-description { display: none; opacity: 0; }
+
+.card-tech.active .card-description {
+  display: block;
+  opacity: 1;
+  animation: fadeIn 0.6s ease;
+}
+
+.card-tech.active .card-content { display: none; }
+
+/* --- CARDS DE PROJETO --- */
+.projeto-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: 0.3s;
+  height: 100%;
+  border-bottom: 5px solid var(--apoio--icones);
+}
+
+.projeto-img-container {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background-color: #eee;
+}
+
+.projeto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-projeto {
+  background-color: var(--cor-principal);
+  color: white;
+  border-radius: 8px;
+  padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-outline-primary {
+    border-color: var(--cor-principal);
+    color: var(--cor-principal);
+    border-radius: 8px;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--cor-principal);
+    color: white;
+}
+
+/* Estilo para o Modal */
+.modal-content {
+    border-radius: 20px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
