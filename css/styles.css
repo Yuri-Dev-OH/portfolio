@@ -217,3 +217,20 @@ section {
     z-index: 10;
     display: none;
 }
+
+/* --- SAUDAÇÃO DINÂMICA --- */
+.saudacao-container {
+    animation: fadeIn 1.5s ease;
+}
+
+.greeting-gif {
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.greeting-text {
+    color: var(--cor-principal);
+    font-weight: bold;
+    font-size: 1.3rem;
+    margin-top: 5px;
+}

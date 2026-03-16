@@ -38,6 +38,7 @@ let listaProjetos = [
 // 3. O MOTOR DE RENDERIZAÇÃO (Desenha o HTML)
 // =========================================================
 document.addEventListener('DOMContentLoaded', async () => {
+    atualizarSaudacao();
     renderizarTudo(); // Desenha rápido com os dados padrão
     await carregarDadosDoBanco(); // Puxa do banco e redesenha por cima
 });
@@ -316,7 +317,7 @@ async function salvarAlteracoes() {
     // Atualiza as listas com tudo o que foi modificado na tela
     extrairDadosDaTela(); 
 
-    // O Pulo do Gato: Transforma as listas em texto JSON purinho
+
     const updates = [
         { chave: 'perfil', valor: JSON.stringify(dadosPerfil) },
         { chave: 'stacks', valor: JSON.stringify(listaStacks) },
@@ -346,10 +347,31 @@ async function carregarDadosDoBanco() {
                 if (item.chave === 'stacks') listaStacks = JSON.parse(item.valor);
                 if (item.chave === 'projetos') listaProjetos = JSON.parse(item.valor);
             } catch (e) {
-                // Se der erro (ex: achar o HTML velho que salvamos antes), ele ignora para não quebrar
+                
                 console.log("Ignorando formato de dados antigo para limpar o banco.");
             }
         });
         renderizarTudo(); // Desenha a tela final com os dados que vieram
+    }
+}
+
+// =========================================================
+// 6. SEÇÃO DO BOM DIA, BOA TARDE, BOA NOITE
+// =========================================================
+
+function atualizarSaudacao() {
+    const horaAtual = new Date().getHours();
+    const textoSaudacao = document.getElementById('greeting-text');
+    const gifSaudacao = document.getElementById('greeting-gif');
+
+    if (horaAtual >= 5 && horaAtual < 12) {
+        textoSaudacao.innerText = "Bom dia!";
+        gifSaudacao.src = "img/gifs/morning.gif"; 
+    } else if (horaAtual >= 12 && horaAtual < 18) {
+        textoSaudacao.innerText = "Boa tarde!";
+        gifSaudacao.src = "img/gifs/morning.gif";
+    } else {
+        textoSaudacao.innerText = "Boa noite!";
+        gifSaudacao.src = "img/gifs/good-night.gif";
     }
 }
