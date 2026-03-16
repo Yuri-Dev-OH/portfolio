@@ -1,36 +1,142 @@
 // =========================================================
-// 1. CONEXÃO COM O BANCO DE DADOS (SUPABASE)
+// 1. SUPABASE E VARIÁVEIS DE AMBIENTE
 // =========================================================
 const SUPABASE_URL = 'https://ncwvrsobqcsttourhwih.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jd3Zyc29icWNzdHRvdXJod2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwODkyNTcsImV4cCI6MjA4ODY2NTI1N30.N74_hRf4dV9a32HKZduoUUAvEEXITxG594idNqhy_OA';
-
 const meuBanco = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// =========================================================
+// 2. O CORAÇÃO DO SITE: AS LISTAS DE DADOS (JSON)
+// =========================================================
+let dadosPerfil = {
+    nome: "Yuri Gonçalves",
+    subtitulo: "Desenvolvedor de Software Multiplataforma",
+    foto: "img/yuri.png",
+    sobre: "Sou Yuri Gonçalves de Souza, estudante de Desenvolvimento de Software Multiplataforma na Fatec São José dos Campos. Entusiasta de tecnologia e hardware, busco aplicar meus conhecimentos em análise de dados e desenvolvimento web para criar soluções eficientes."
+};
+
+let listaStacks = [
+    { id: 1, nome: "Python", icone: "devicon-python-plain", descricao: "Análise de dados e backend com Flask." },
+    { id: 2, nome: "MySQL", icone: "devicon-mysql-plain", descricao: "Modelagem e gerenciamento de bancos de dados." },
+    { id: 3, nome: "HTML5", icone: "devicon-html5-plain", descricao: "Estruturas web semânticas e acessíveis." },
+    { id: 4, nome: "CSS3", icone: "devicon-css3-plain", descricao: "Design responsivo e animações modernas." }
+];
+
+let listaProjetos = [
+    {
+        id: 1,
+        titulo: "CodeWave",
+        resumo: "Visualização de dados demográficos de São José dos Campos.",
+        imagem: "img/codewave.png",
+        tags: ["Python", "Flask"],
+        link: "https://github.com/guilhermefpo/CodeWave",
+        descricaoCompleta: "O CodeWave é uma ferramenta de análise desenvolvida para transformar dados demográficos em gráficos intuitivos, facilitando a compreensão das estatísticas municipais."
+    }
+];
 
 // =========================================================
-// 2. LÓGICA DO PORTFÓLIO E MODO DEV
+// 3. O MOTOR DE RENDERIZAÇÃO (Desenha o HTML)
 // =========================================================
-document.addEventListener('DOMContentLoaded', () => {
-    carregarDadosDoBanco();
+document.addEventListener('DOMContentLoaded', async () => {
+    renderizarTudo(); // Desenha rápido com os dados padrão
+    await carregarDadosDoBanco(); // Puxa do banco e redesenha por cima
 });
 
-function toggleCard(element) {
-    const alvoClique = window.event ? window.event.target : null;
-    if (alvoClique && alvoClique.isContentEditable) return; 
+function renderizarTudo() {
+    // Renderiza Perfil
+    document.getElementById('edit-nome').innerText = dadosPerfil.nome;
+    document.getElementById('edit-subtitulo').innerText = dadosPerfil.subtitulo;
+    document.getElementById('edit-foto').src = dadosPerfil.foto;
+    document.getElementById('edit-sobre').innerText = dadosPerfil.sobre;
 
-    const todosOsCards = document.querySelectorAll('.card-tech');
-    todosOsCards.forEach(card => {
-        if (card !== element) card.classList.remove('active');
+    // Renderiza Stacks
+    const containerStacks = document.getElementById('container-stacks');
+    containerStacks.innerHTML = '';
+    listaStacks.forEach(stack => {
+        containerStacks.innerHTML += `
+            <div class="col-md-3 stack-item" data-id="${stack.id}">
+                <div class="card-tech" onclick="toggleCard(this)">
+                    <button class="btn-delete-item" style="display:none;" onclick="deletarStack(${stack.id}, event)">X</button>
+                    <div class="card-content">
+                        <i class="${stack.icone} colored"></i>
+                        <h3 class="stack-nome">${stack.nome}</h3>
+                    </div>
+                    <div class="card-description">
+                        <h3 class="stack-nome">${stack.nome}</h3>
+                        <p class="stack-desc">${stack.descricao}</p>
+                    </div>
+                </div>
+            </div>
+        `;
     });
-    element.classList.toggle('active');
-    
+
+    // Renderiza Projetos e Modais
+    const containerProjetos = document.getElementById('container-projetos');
+    const containerModais = document.getElementById('container-modais');
+    containerProjetos.innerHTML = '';
+    containerModais.innerHTML = '';
+
+    listaProjetos.forEach(proj => {
+        let tagsHTML = proj.tags.map(tag => `<span class="badge bg-primary">${tag}</span>`).join(' ');
+        
+        containerProjetos.innerHTML += `
+            <div class="col-md-6 col-lg-4 projeto-item" data-id="${proj.id}">
+                <div class="projeto-card">
+                    <button class="btn-delete-item" style="display:none;" onclick="deletarProjeto(${proj.id}, event)">X</button>
+                    <div class="projeto-img-container">
+                        <img src="${proj.imagem}" class="projeto-img" id="img-proj-${proj.id}">
+                    </div>
+                    <div class="projeto-corpo p-4">
+                        <h3 class="proj-titulo">${proj.titulo}</h3>
+                        <p class="proj-resumo">${proj.resumo}</p>
+                        <div class="tags mb-4">
+                            ${tagsHTML}
+                            <span class="badge bg-success btn-edit-tags ms-1" style="display:none; cursor:pointer;" onclick="editarTags(${proj.id})">✏️ Editar</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="${proj.link}" class="btn btn-projeto proj-link"><i class="devicon-github-original"></i> Link</a>
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalProj-${proj.id}">Descrição</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        containerModais.innerHTML += `
+            <div class="modal fade modal-projeto" id="modalProj-${proj.id}" data-id="${proj.id}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="background-color: var(--fundo); border: 2px solid var(--cor-principal);">
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title" style="color: var(--cor-principal); font-weight: bold;">Sobre o Projeto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="proj-modal-desc">${proj.descricaoCompleta}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
 }
+
+function toggleCard(element) {
+    const alvo = window.event ? window.event.target : null;
+    if (alvo && alvo.isContentEditable) return; 
+
+    const todos = document.querySelectorAll('.card-tech');
+    todos.forEach(c => { if (c !== element) c.classList.remove('active'); });
+    element.classList.toggle('active');
+}
+
+// =========================================================
+// 4. LÓGICA DO MODO DESENVOLVEDOR (Data-Driven)
+// =========================================================
 async function verificarSenha() {
     const campoSenha = document.getElementById("senhaAdmin");
     const senhaDigitada = campoSenha.value;
     
     try {
-        // Envia a senha para o nosso arquivo invisível no Vercel
         const resposta = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -39,7 +145,6 @@ async function verificarSenha() {
 
         const dados = await resposta.json();
 
-        // Se o Vercel disser que a senha está certa, libera o acesso
         if (dados.sucesso) {
             const modalEl = document.getElementById('modalAdmin');
             const modalObj = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -51,292 +156,200 @@ async function verificarSenha() {
             alert("Senha incorreta!");
             campoSenha.value = ""; 
         }
-    } catch (erro) {
-        console.error(erro);
-        alert("Erro de conexão. Verifique se o site já está rodando no Vercel.");
+    } catch (e) {
+        alert("Erro. Verifique se a API no Vercel está rodando.");
     }
 }
 
-// Lógica para alternar as cores do Bootstrap nas Tags
-function alternarCorTag(tagElement) {
-    const cores = ['bg-primary', 'bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'bg-dark'];
-    let corAtual = cores.find(c => tagElement.classList.contains(c)) || 'bg-primary';
-    let proxCor = cores[(cores.indexOf(corAtual) + 1) % cores.length];
-    
-    tagElement.classList.remove(...cores);
-    tagElement.classList.add(proxCor);
-}
-
 function ativarModoEdicao() {
-    alert("MODO DE EDIÇÃO ATIVADO!\n\n- DICA TAGS: Dê um duplo clique na tag para mudar a cor.\n- DICA MODAIS: Você pode abrir os modais de descrição agora mesmo para editar o texto dentro deles.");
-
     document.getElementById("btnSalvarGeral").style.display = "block";
     document.getElementById("btn-add-stack").style.display = "block";
     document.getElementById("btn-add-projeto").style.display = "block";
 
-    // Textos base editáveis
-    const camposParaEditar = [
-        document.getElementById('edit-nome'),
-        document.getElementById('edit-subtitulo'),
-        document.getElementById('edit-sobre')
-    ];
-    camposParaEditar.forEach(el => makeEditable(el));
-    document.querySelectorAll('#container-stacks h3, #container-stacks p, #container-projetos h3, #container-projetos p').forEach(el => makeEditable(el));
-
-    // Torna textos dos Modais editáveis
-    document.querySelectorAll('.modal:not(#modalAdmin) .modal-title, .modal:not(#modalAdmin) .modal-body p').forEach(el => makeEditable(el));
-
-    // Imagens editáveis
-    const imagens = [document.getElementById('edit-foto'), ...document.querySelectorAll('.projeto-img')];
-    imagens.forEach(img => {
-        if(img) {
-            img.classList.add('img-editing');
-            img.onclick = () => {
-                const novaURL = prompt("Cole o link (URL) da nova imagem:", img.src);
-                if (novaURL) img.src = novaURL;
-            };
-        }
+    // Torna textos editáveis
+    const seletoresTexto = ['.perfil-editavel', '.stack-nome', '.stack-desc', '.proj-titulo', '.proj-resumo', '.proj-modal-desc'];
+    seletoresTexto.forEach(seletor => {
+        document.querySelectorAll(seletor).forEach(el => {
+            el.setAttribute("contenteditable", "true");
+            el.classList.add("is-editing");
+        });
     });
 
-    // Links dos botões do GitHub
-    document.querySelectorAll('.btn-projeto').forEach(btn => {
+    // Mostra botões de deletar e editar tags
+    document.querySelectorAll('.btn-delete-item').forEach(btn => btn.style.display = 'block');
+    document.querySelectorAll('.btn-edit-tags').forEach(btn => btn.style.display = 'inline-block');
+
+    // Imagens editáveis
+    document.getElementById('edit-foto').onclick = (e) => editarImagemPerfil(e.target);
+    document.getElementById('edit-foto').classList.add("img-editing");
+    
+    document.querySelectorAll('.projeto-img').forEach(img => {
+        img.classList.add('img-editing');
+        img.onclick = () => editarImagemProj(img);
+    });
+
+    // Links editáveis
+    document.querySelectorAll('.proj-link').forEach(btn => {
         btn.classList.add('is-editing');
         btn.onclick = (e) => {
             e.preventDefault(); 
-            const novoLink = prompt("Cole o novo link para este botão:", btn.href);
+            const novoLink = prompt("Novo link para o botão:", btn.href);
             if (novoLink) btn.href = novoLink;
         };
     });
-
-    // Gestão de Tags (+ botão duplo clique para cor)
-    document.querySelectorAll('.tags').forEach(container => {
-        container.querySelectorAll('.badge').forEach(tag => {
-            makeEditable(tag);
-            tag.title = "Duplo clique para mudar cor";
-            tag.ondblclick = () => alternarCorTag(tag);
-        });
-        
-        if(!container.querySelector('.btn-add-tag')) {
-            const addBtn = document.createElement('span');
-            addBtn.className = "badge bg-success btn-add-tag ms-1";
-            addBtn.style.cursor = "pointer";
-            addBtn.innerText = "+ Tag";
-            
-            addBtn.onclick = () => {
-                const nome = prompt("Nome da nova tag:");
-                if(nome) {
-                    const novaTag = document.createElement('span');
-                    novaTag.className = "badge bg-primary me-1 is-editing";
-                    novaTag.innerText = nome;
-                    makeEditable(novaTag);
-                    novaTag.title = "Duplo clique para mudar cor";
-                    novaTag.ondblclick = () => alternarCorTag(novaTag);
-                    container.insertBefore(novaTag, addBtn); 
-                }
-            };
-            container.appendChild(addBtn);
-        }
-    });
-
-    // Botões de deletar
-    document.querySelectorAll('.card-tech').forEach(card => adicionarBotaoDeletar(card, card.parentElement));
-    document.querySelectorAll('.projeto-card').forEach(card => adicionarBotaoDeletar(card, card.parentElement));
 }
 
-function makeEditable(element) {
-    if(!element) return;
-    element.setAttribute("contenteditable", "true");
-    element.classList.add("is-editing");
+// LÓGICA DE INSERIR DADOS NOS ARRAYS VIA BOTÕES
+function editarTags(idProj) {
+    extrairDadosDaTela(); // Salva estado atual primeiro
+    const proj = listaProjetos.find(p => p.id === idProj);
+    const textoTags = prompt("Digite as tags separadas por vírgula (ex: Python, Flask):", proj.tags.join(", "));
+    if(textoTags !== null) {
+        proj.tags = textoTags.split(",").map(t => t.trim()).filter(t => t !== "");
+        renderizarTudo();
+        ativarModoEdicao();
+    }
 }
 
-function adicionarBotaoDeletar(cardElement, parentElement) {
-    if(cardElement.querySelector('.btn-delete-item')) return;
-    const btnDel = document.createElement("button");
-    btnDel.innerText = "X";
-    btnDel.className = "btn-delete-item";
-    btnDel.style.display = "block";
-    btnDel.onclick = (e) => {
-        e.stopPropagation(); 
-        if(confirm("Deseja excluir este item?")) parentElement.remove();
-    };
-    cardElement.appendChild(btnDel);
+function editarImagemPerfil(imgElement) {
+    const novaURL = prompt("URL da nova foto de perfil:", imgElement.src);
+    if(novaURL) imgElement.src = novaURL;
+}
+
+function editarImagemProj(imgElement) {
+    const novaURL = prompt("URL da nova imagem do projeto:", imgElement.src);
+    if(novaURL) imgElement.src = novaURL;
 }
 
 function adicionarStack() {
-    const nome = prompt("Nome da Tecnologia:", "Nova Tech");
+    extrairDadosDaTela();
+    const nome = prompt("Nome da Tecnologia:");
     if(!nome) return;
-    const icone = prompt("Classe do ícone DevIcon:", "devicon-javascript-plain");
-    
-    const novaStackHTML = `
-        <div class="col-md-3">
-            <div class="card-tech" onclick="toggleCard(this)">
-                <div class="card-content">
-                    <i class="${icone} colored"></i>
-                    <h3 contenteditable="true" class="is-editing">${nome}</h3>
-                </div>
-                <div class="card-description">
-                    <h3 contenteditable="true" class="is-editing">${nome}</h3>
-                    <p contenteditable="true" class="is-editing">Descrição...</p>
-                </div>
-            </div>
-        </div>
-    `;
-    document.getElementById("container-stacks").insertAdjacentHTML('beforeend', novaStackHTML);
-    const novaStack = document.getElementById("container-stacks").lastElementChild;
-    adicionarBotaoDeletar(novaStack.querySelector('.card-tech'), novaStack);
+    listaStacks.push({
+        id: Date.now(),
+        nome: nome,
+        icone: prompt("Classe do ícone DevIcon:", "devicon-javascript-plain"),
+        descricao: "Descrição curta..."
+    });
+    renderizarTudo();
+    ativarModoEdicao();
+}
+
+function deletarStack(id, event) {
+    event.stopPropagation();
+    if(confirm("Excluir esta tecnologia?")) {
+        extrairDadosDaTela();
+        listaStacks = listaStacks.filter(s => s.id !== id);
+        renderizarTudo();
+        ativarModoEdicao();
+    }
 }
 
 function adicionarProjeto() {
-    const titulo = prompt("Nome do Projeto:", "Novo Projeto");
-    if(!titulo) return;
+    extrairDadosDaTela();
+    listaProjetos.push({
+        id: Date.now(),
+        titulo: prompt("Nome do Projeto:", "Novo Projeto") || "Novo Projeto",
+        resumo: "Resumo curto...",
+        imagem: "img/placeholder.png",
+        tags: ["NovaTag"],
+        link: "#",
+        descricaoCompleta: "Descrição completa do projeto aqui..."
+    });
+    renderizarTudo();
+    ativarModoEdicao();
+}
 
-    // Cria um ID único para o Modal desse novo projeto
-    const idUnicoModal = 'modalProj-' + Date.now();
-
-    const novoProjetoHTML = `
-        <div class="col-md-6 col-lg-4">
-            <div class="projeto-card">
-                <div class="projeto-img-container">
-                    <img src="img/placeholder.png" alt="Preview" class="projeto-img img-editing" onclick="this.src = prompt('Nova URL da imagem:', this.src) || this.src">
-                </div>
-                <div class="projeto-corpo p-4">
-                    <h3 contenteditable="true" class="is-editing">${titulo}</h3>
-                    <p contenteditable="true" class="is-editing">Descrição curta do projeto...</p>
-                    <div class="tags mb-4">
-                        <span class="badge bg-primary is-editing" contenteditable="true" title="Duplo clique para mudar cor" ondblclick="alternarCorTag(this)">Nova Tag</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="#" class="btn btn-projeto is-editing" onclick="event.preventDefault(); this.href = prompt('Novo link:', this.href) || this.href"><i class="devicon-github-original"></i> Link</a>
-                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#${idUnicoModal}">Descrição</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    document.getElementById("container-projetos").insertAdjacentHTML('beforeend', novoProjetoHTML);
-    const novoProj = document.getElementById("container-projetos").lastElementChild;
-    adicionarBotaoDeletar(novoProj.querySelector('.projeto-card'), novoProj);
-    
-    // Adiciona o botão de Tag no projeto recém-criado
-    const novoContainerTags = novoProj.querySelector('.tags');
-    const addBtn = document.createElement('span');
-    addBtn.className = "badge bg-success btn-add-tag ms-1";
-    addBtn.style.cursor = "pointer";
-    addBtn.innerText = "+ Tag";
-    addBtn.onclick = () => {
-        const nome = prompt("Nome da nova tag:");
-        if(nome) {
-            const novaTag = document.createElement('span');
-            novaTag.className = "badge bg-primary me-1 is-editing";
-            novaTag.innerText = nome;
-            novaTag.setAttribute("contenteditable", "true");
-            novaTag.title = "Duplo clique para mudar cor";
-            novaTag.ondblclick = () => alternarCorTag(novaTag);
-            novoContainerTags.insertBefore(novaTag, addBtn);
-        }
-    };
-    novoContainerTags.appendChild(addBtn);
-
-    // CRIA O MODAL EXCLUSIVO PARA ESSE NOVO PROJETO NO FIM DA PÁGINA
-    const novoModalHTML = `
-        <div class="modal fade" id="${idUnicoModal}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content" style="background-color: var(--fundo); border: 2px solid var(--cor-principal);">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title is-editing" style="color: var(--cor-principal); font-weight: bold;" contenteditable="true">Sobre o ${titulo}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="is-editing" contenteditable="true">Escreva a descrição detalhada do projeto aqui...</p>
-                    </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', novoModalHTML);
+function deletarProjeto(id, event) {
+    event.stopPropagation();
+    if(confirm("Excluir este projeto?")) {
+        extrairDadosDaTela();
+        listaProjetos = listaProjetos.filter(p => p.id !== id);
+        renderizarTudo();
+        ativarModoEdicao();
+    }
 }
 
 // =========================================================
-// 3. INTEGRAÇÃO COM SUPABASE (SALVAR E CARREGAR)
+// 5. PONTE COM O SUPABASE (Lê do Banco / Salva no Banco)
 // =========================================================
+
+// Função vital: Lê o que você alterou visualmente e joga nas Listas
+function extrairDadosDaTela() {
+    dadosPerfil.nome = document.getElementById('edit-nome').innerText;
+    dadosPerfil.subtitulo = document.getElementById('edit-subtitulo').innerText;
+    dadosPerfil.foto = document.getElementById('edit-foto').src;
+    dadosPerfil.sobre = document.getElementById('edit-sobre').innerText;
+
+    document.querySelectorAll('.stack-item').forEach(el => {
+        const id = parseInt(el.getAttribute('data-id'));
+        const stack = listaStacks.find(s => s.id === id);
+        if(stack) {
+            stack.nome = el.querySelector('.stack-nome').innerText;
+            stack.descricao = el.querySelector('.stack-desc').innerText;
+        }
+    });
+
+    document.querySelectorAll('.projeto-item').forEach(el => {
+        const id = parseInt(el.getAttribute('data-id'));
+        const proj = listaProjetos.find(p => p.id === id);
+        if(proj) {
+            proj.titulo = el.querySelector('.proj-titulo').innerText;
+            proj.resumo = el.querySelector('.proj-resumo').innerText;
+            proj.imagem = el.querySelector('.projeto-img').src;
+            proj.link = el.querySelector('.proj-link').href;
+        }
+    });
+
+    document.querySelectorAll('.modal-projeto').forEach(el => {
+        const id = parseInt(el.getAttribute('data-id'));
+        const proj = listaProjetos.find(p => p.id === id);
+        if(proj) {
+            proj.descricaoCompleta = el.querySelector('.proj-modal-desc').innerText;
+        }
+    });
+}
+
 async function salvarAlteracoes() {
-    // Limpa a sujeira do modo edição antes de salvar
-    document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-        el.removeAttribute("contenteditable");
-        el.classList.remove("is-editing");
-    });
-    document.querySelectorAll('.img-editing').forEach(el => {
-        el.classList.remove("img-editing");
-        el.onclick = null; 
-    });
-    document.querySelectorAll('.btn-projeto').forEach(btn => {
-        btn.classList.remove("is-editing");
-        btn.onclick = null; 
-    });
-    document.querySelectorAll('.badge').forEach(tag => {
-        tag.removeAttribute("title");
-        tag.ondblclick = null; 
-    });
+    document.getElementById("btnSalvarGeral").innerText = "Salvando...";
     
-    document.querySelectorAll('.btn-delete-item, .btn-add-tag').forEach(btn => btn.remove());
-    
-    document.getElementById("btnSalvarGeral").style.display = "none";
-    document.getElementById("btn-add-stack").style.display = "none";
-    document.getElementById("btn-add-projeto").style.display = "none";
+    // Atualiza as listas com tudo o que foi modificado na tela
+    extrairDadosDaTela(); 
 
-    // Captura TODOS os modais de projeto da página e junta o HTML deles
-    let htmlDosModais = "";
-    document.querySelectorAll('.modal:not(#modalAdmin)').forEach(modal => {
-        htmlDosModais += modal.outerHTML + "\n";
-    });
-
+    // O Pulo do Gato: Transforma as listas em texto JSON purinho
     const updates = [
-        { chave: 'nome', valor: document.getElementById('edit-nome').innerText },
-        { chave: 'subtitulo', valor: document.getElementById('edit-subtitulo').innerText },
-        { chave: 'foto', valor: document.getElementById('edit-foto').src },
-        { chave: 'sobre', valor: document.getElementById('edit-sobre').innerText },
-        { chave: 'stacks', valor: document.getElementById('container-stacks').innerHTML },
-        { chave: 'projetos', valor: document.getElementById('container-projetos').innerHTML },
-        { chave: 'modais', valor: htmlDosModais } // <- Salva os modais no banco!
+        { chave: 'perfil', valor: JSON.stringify(dadosPerfil) },
+        { chave: 'stacks', valor: JSON.stringify(listaStacks) },
+        { chave: 'projetos', valor: JSON.stringify(listaProjetos) }
     ];
 
     const { error } = await meuBanco.from('site_content').upsert(updates);
 
     if (error) {
         alert("Erro ao salvar: " + error.message);
+        document.getElementById("btnSalvarGeral").innerText = "💾 Salvar no Banco";
     } else {
-        alert("Sucesso! Banco atualizado e publicado para todos.");
+        alert("Sucesso! Banco de Dados atualizado e limpo.");
         location.reload(); 
     }
 }
 
 async function carregarDadosDoBanco() {
     const { data, error } = await meuBanco.from('site_content').select('*');
-    
-    if (error) {
-        console.error("Erro no Supabase:", error);
-        return;
-    }
-    if (data && data.length > 0) {
-        const dados = {};
-        data.forEach(item => dados[item.chave] = item.valor);
+    if (error) return;
 
-        if(dados.nome) document.getElementById('edit-nome').innerText = dados.nome;
-        if(dados.subtitulo) document.getElementById('edit-subtitulo').innerText = dados.subtitulo;
-        if(dados.foto) document.getElementById('edit-foto').src = dados.foto;
-        if(dados.sobre) document.getElementById('edit-sobre').innerText = dados.sobre;
-        if(dados.stacks && dados.stacks.trim() !== '') document.getElementById('container-stacks').innerHTML = dados.stacks;
-        if(dados.projetos && dados.projetos.trim() !== '') document.getElementById('container-projetos').innerHTML = dados.projetos;
-        
-        // Carrega os modais salvos
-        if(dados.modais && dados.modais.trim() !== '') {
-            // Apaga os originais (exceto o modal de admin)
-            document.querySelectorAll('.modal:not(#modalAdmin)').forEach(m => m.remove());
-            // Insere os que vieram do banco
-            document.body.insertAdjacentHTML('beforeend', dados.modais);
-        }
+    if (data && data.length > 0) {
+        data.forEach(item => {
+            try {
+                // Tenta transformar o JSON de volta em Lista
+                if (item.chave === 'perfil') dadosPerfil = JSON.parse(item.valor);
+                if (item.chave === 'stacks') listaStacks = JSON.parse(item.valor);
+                if (item.chave === 'projetos') listaProjetos = JSON.parse(item.valor);
+            } catch (e) {
+                // Se der erro (ex: achar o HTML velho que salvamos antes), ele ignora para não quebrar
+                console.log("Ignorando formato de dados antigo para limpar o banco.");
+            }
+        });
+        renderizarTudo(); // Desenha a tela final com os dados que vieram
     }
 }
