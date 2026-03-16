@@ -42,7 +42,7 @@ let listaCursos = [
         imagem: "img/placeholder.png",
         tags: ["Python", "Dados"],
         descricaoCompleta: "Curso focado em extração, limpeza e visualização de grandes volumes de dados.",
-        pdfLink: "#" // O link do certificado entra aqui
+        pdfLink: "#" 
     }
 ];
 
@@ -75,13 +75,11 @@ function atualizarSaudacao() {
 }
 
 function renderizarTudo() {
-    // Renderiza Perfil
     document.getElementById('edit-nome').innerText = dadosPerfil.nome;
     document.getElementById('edit-subtitulo').innerText = dadosPerfil.subtitulo;
     document.getElementById('edit-foto').src = dadosPerfil.foto;
     document.getElementById('edit-sobre').innerText = dadosPerfil.sobre;
 
-    // Renderiza Stacks
     const containerStacks = document.getElementById('container-stacks');
     containerStacks.innerHTML = '';
     listaStacks.forEach(stack => {
@@ -110,7 +108,6 @@ function renderizarTudo() {
     containerCursos.innerHTML = '';
     containerModais.innerHTML = '';
 
-    // Renderiza Projetos
     listaProjetos.forEach(proj => {
         let tagsHTML = proj.tags.map(tag => `<span class="badge bg-primary">${tag}</span>`).join(' ');
         
@@ -137,10 +134,10 @@ function renderizarTudo() {
             </div>
         `;
 
-        containerModais.innerHTML += criarHTMLModal(`modalProj-${proj.id}`, proj.id, "Sobre o Projeto", proj.descricaoCompleta, "projeto-modal-desc");
+        // CORREÇÃO: Passando a etiqueta "modal-projeto" para o JS achar depois
+        containerModais.innerHTML += criarHTMLModal(`modalProj-${proj.id}`, proj.id, "Sobre o Projeto", proj.descricaoCompleta, "projeto-modal-desc", "modal-projeto");
     });
 
-    // Renderiza Cursos
     listaCursos.forEach(curso => {
         let tagsHTML = curso.tags.map(tag => `<span class="badge bg-primary">${tag}</span>`).join(' ');
         
@@ -167,13 +164,15 @@ function renderizarTudo() {
             </div>
         `;
 
-        containerModais.innerHTML += criarHTMLModal(`modalCurso-${curso.id}`, curso.id, "Sobre o Curso", curso.descricaoCompleta, "curso-modal-desc");
+        // CORREÇÃO: Passando a etiqueta "modal-curso" para o JS achar depois
+        containerModais.innerHTML += criarHTMLModal(`modalCurso-${curso.id}`, curso.id, "Sobre o Curso", curso.descricaoCompleta, "curso-modal-desc", "modal-curso");
     });
 }
 
-function criarHTMLModal(idModal, idItem, titulo, descricao, classeDescricao) {
+// CORREÇÃO: A função agora aceita a classeDoModal e injeta no HTML
+function criarHTMLModal(idModal, idItem, titulo, descricao, classeDescricao, classeDoModal) {
     return `
-        <div class="modal fade" id="${idModal}" data-id="${idItem}" tabindex="-1" aria-hidden="true">
+        <div class="modal fade ${classeDoModal}" id="${idModal}" data-id="${idItem}" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="background-color: var(--fundo); border: 2px solid var(--cor-principal);">
                     <div class="modal-header border-0">
@@ -236,7 +235,6 @@ function ativarModoEdicao() {
     document.getElementById("btn-add-projeto").style.display = "block";
     document.getElementById("btn-add-curso").style.display = "block";
 
-    // Torna textos editáveis
     const seletoresTexto = [
         '.perfil-editavel', '.stack-nome', '.stack-desc', 
         '.proj-titulo', '.proj-resumo', '.projeto-modal-desc',
@@ -250,11 +248,9 @@ function ativarModoEdicao() {
         });
     });
 
-    // Mostra botões de deletar e editar tags
     document.querySelectorAll('.btn-delete-item').forEach(btn => btn.style.display = 'block');
     document.querySelectorAll('.btn-edit-tags').forEach(btn => btn.style.display = 'inline-block');
 
-    // Imagens editáveis
     document.getElementById('edit-foto').onclick = (e) => editarImagemElemento(e.target);
     document.getElementById('edit-foto').classList.add("img-editing");
     
@@ -263,7 +259,6 @@ function ativarModoEdicao() {
         img.onclick = () => editarImagemElemento(img);
     });
 
-    // Links editáveis (GitHub)
     document.querySelectorAll('.proj-link').forEach(btn => {
         btn.classList.add('is-editing');
         btn.onclick = (e) => {
@@ -273,7 +268,6 @@ function ativarModoEdicao() {
         };
     });
 
-    // Links editáveis (PDF dos Cursos)
     document.querySelectorAll('.curso-pdf-link').forEach(btn => {
         btn.classList.add('is-editing');
         btn.onclick = (e) => {
@@ -284,7 +278,6 @@ function ativarModoEdicao() {
     });
 }
 
-// LÓGICA DE INSERIR DADOS NOS ARRAYS VIA BOTÕES
 function editarTags(id, tipo) {
     extrairDadosDaTela(); 
     const listaAlvo = tipo === 'projeto' ? listaProjetos : listaCursos;
@@ -413,11 +406,11 @@ function extrairDadosDaTela() {
             curso.titulo = el.querySelector('.curso-titulo').innerText;
             curso.resumo = el.querySelector('.curso-resumo').innerText;
             curso.imagem = el.querySelector('.projeto-img').src;
-            curso.pdfLink = el.querySelector('.curso-pdf-link').href; // Extrai o link do PDF
+            curso.pdfLink = el.querySelector('.curso-pdf-link').href; 
         }
     });
 
-    // Pega descrições dos modais (Cursos e Projetos)
+    // AGORA O JAVASCRIPT ACHA ELES AQUI Ó:
     document.querySelectorAll('.modal-projeto, .modal-curso').forEach(el => {
         const id = parseInt(el.getAttribute('data-id'));
         const isProjeto = el.classList.contains('modal-projeto');
