@@ -34,14 +34,45 @@ let listaProjetos = [
     }
 ];
 
+let listaCursos = [
+    {
+        id: 1,
+        titulo: "Bootcamp Python e Pandas",
+        resumo: "Formação intensiva em análise de dados.",
+        imagem: "img/placeholder.png",
+        tags: ["Python", "Dados"],
+        descricaoCompleta: "Curso focado em extração, limpeza e visualização de grandes volumes de dados.",
+        pdfLink: "#" // O link do certificado entra aqui
+    }
+];
+
 // =========================================================
-// 3. O MOTOR DE RENDERIZAÇÃO (Desenha o HTML)
+// 3. O MOTOR DE RENDERIZAÇÃO E SAUDAÇÃO
 // =========================================================
 document.addEventListener('DOMContentLoaded', async () => {
     atualizarSaudacao();
-    renderizarTudo(); // Desenha rápido com os dados padrão
-    await carregarDadosDoBanco(); // Puxa do banco e redesenha por cima
+    renderizarTudo(); 
+    await carregarDadosDoBanco(); 
 });
+
+function atualizarSaudacao() {
+    const horaAtual = new Date().getHours();
+    const textoSaudacao = document.getElementById('greeting-text');
+    const gifSaudacao = document.getElementById('greeting-gif');
+
+    if (!textoSaudacao || !gifSaudacao) return;
+
+    if (horaAtual >= 5 && horaAtual < 12) {
+        textoSaudacao.innerText = "Bom dia!";
+        gifSaudacao.src = "img/gifs/morning.gif"; 
+    } else if (horaAtual >= 12 && horaAtual < 18) {
+        textoSaudacao.innerText = "Boa tarde!";
+        gifSaudacao.src = "img/gifs/morning.gif";
+    } else {
+        textoSaudacao.innerText = "Boa noite!";
+        gifSaudacao.src = "img/gifs/good-night.gif";
+    }
+}
 
 function renderizarTudo() {
     // Renderiza Perfil
@@ -71,12 +102,15 @@ function renderizarTudo() {
         `;
     });
 
-    // Renderiza Projetos e Modais
     const containerProjetos = document.getElementById('container-projetos');
+    const containerCursos = document.getElementById('container-cursos');
     const containerModais = document.getElementById('container-modais');
+    
     containerProjetos.innerHTML = '';
+    containerCursos.innerHTML = '';
     containerModais.innerHTML = '';
 
+    // Renderiza Projetos
     listaProjetos.forEach(proj => {
         let tagsHTML = proj.tags.map(tag => `<span class="badge bg-primary">${tag}</span>`).join(' ');
         
@@ -92,10 +126,10 @@ function renderizarTudo() {
                         <p class="proj-resumo">${proj.resumo}</p>
                         <div class="tags mb-4">
                             ${tagsHTML}
-                            <span class="badge bg-success btn-edit-tags ms-1" style="display:none; cursor:pointer;" onclick="editarTags(${proj.id})">✏️ Editar</span>
+                            <span class="badge bg-success btn-edit-tags ms-1" style="display:none; cursor:pointer;" onclick="editarTags(${proj.id}, 'projeto')">✏️ Editar</span>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="${proj.link}" class="btn btn-projeto proj-link"><i class="devicon-github-original"></i> Link</a>
+                            <a href="${proj.link}" class="btn btn-projeto proj-link" target="_blank"><i class="devicon-github-original"></i> Link</a>
                             <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalProj-${proj.id}">Descrição</button>
                         </div>
                     </div>
@@ -103,22 +137,56 @@ function renderizarTudo() {
             </div>
         `;
 
-        containerModais.innerHTML += `
-            <div class="modal fade modal-projeto" id="modalProj-${proj.id}" data-id="${proj.id}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content" style="background-color: var(--fundo); border: 2px solid var(--cor-principal);">
-                        <div class="modal-header border-0">
-                            <h5 class="modal-title" style="color: var(--cor-principal); font-weight: bold;">Sobre o Projeto</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        containerModais.innerHTML += criarHTMLModal(`modalProj-${proj.id}`, proj.id, "Sobre o Projeto", proj.descricaoCompleta, "projeto-modal-desc");
+    });
+
+    // Renderiza Cursos
+    listaCursos.forEach(curso => {
+        let tagsHTML = curso.tags.map(tag => `<span class="badge bg-primary">${tag}</span>`).join(' ');
+        
+        containerCursos.innerHTML += `
+            <div class="col-md-6 col-lg-4 curso-item" data-id="${curso.id}">
+                <div class="projeto-card">
+                    <button class="btn-delete-item" style="display:none;" onclick="deletarCurso(${curso.id}, event)">X</button>
+                    <div class="projeto-img-container">
+                        <img src="${curso.imagem}" class="projeto-img" id="img-curso-${curso.id}">
+                    </div>
+                    <div class="projeto-corpo p-4">
+                        <h3 class="curso-titulo">${curso.titulo}</h3>
+                        <p class="curso-resumo">${curso.resumo}</p>
+                        <div class="tags mb-4">
+                            ${tagsHTML}
+                            <span class="badge bg-success btn-edit-tags ms-1" style="display:none; cursor:pointer;" onclick="editarTags(${curso.id}, 'curso')">✏️ Editar</span>
                         </div>
-                        <div class="modal-body">
-                            <p class="proj-modal-desc">${proj.descricaoCompleta}</p>
+                        <div class="d-flex gap-2">
+                            <a href="${curso.pdfLink || '#'}" class="btn btn-projeto curso-pdf-link" target="_blank" download>📄 PDF</a>
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCurso-${curso.id}">Descrição</button>
                         </div>
                     </div>
                 </div>
             </div>
         `;
+
+        containerModais.innerHTML += criarHTMLModal(`modalCurso-${curso.id}`, curso.id, "Sobre o Curso", curso.descricaoCompleta, "curso-modal-desc");
     });
+}
+
+function criarHTMLModal(idModal, idItem, titulo, descricao, classeDescricao) {
+    return `
+        <div class="modal fade" id="${idModal}" data-id="${idItem}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="background-color: var(--fundo); border: 2px solid var(--cor-principal);">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title" style="color: var(--cor-principal); font-weight: bold;">${titulo}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="${classeDescricao}">${descricao}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function toggleCard(element) {
@@ -166,9 +234,15 @@ function ativarModoEdicao() {
     document.getElementById("btnSalvarGeral").style.display = "block";
     document.getElementById("btn-add-stack").style.display = "block";
     document.getElementById("btn-add-projeto").style.display = "block";
+    document.getElementById("btn-add-curso").style.display = "block";
 
     // Torna textos editáveis
-    const seletoresTexto = ['.perfil-editavel', '.stack-nome', '.stack-desc', '.proj-titulo', '.proj-resumo', '.proj-modal-desc'];
+    const seletoresTexto = [
+        '.perfil-editavel', '.stack-nome', '.stack-desc', 
+        '.proj-titulo', '.proj-resumo', '.projeto-modal-desc',
+        '.curso-titulo', '.curso-resumo', '.curso-modal-desc'
+    ];
+    
     seletoresTexto.forEach(seletor => {
         document.querySelectorAll(seletor).forEach(el => {
             el.setAttribute("contenteditable", "true");
@@ -181,44 +255,51 @@ function ativarModoEdicao() {
     document.querySelectorAll('.btn-edit-tags').forEach(btn => btn.style.display = 'inline-block');
 
     // Imagens editáveis
-    document.getElementById('edit-foto').onclick = (e) => editarImagemPerfil(e.target);
+    document.getElementById('edit-foto').onclick = (e) => editarImagemElemento(e.target);
     document.getElementById('edit-foto').classList.add("img-editing");
     
     document.querySelectorAll('.projeto-img').forEach(img => {
         img.classList.add('img-editing');
-        img.onclick = () => editarImagemProj(img);
+        img.onclick = () => editarImagemElemento(img);
     });
 
-    // Links editáveis
+    // Links editáveis (GitHub)
     document.querySelectorAll('.proj-link').forEach(btn => {
         btn.classList.add('is-editing');
         btn.onclick = (e) => {
             e.preventDefault(); 
-            const novoLink = prompt("Novo link para o botão:", btn.href);
+            const novoLink = prompt("Novo link para o botão do projeto:", btn.href);
+            if (novoLink) btn.href = novoLink;
+        };
+    });
+
+    // Links editáveis (PDF dos Cursos)
+    document.querySelectorAll('.curso-pdf-link').forEach(btn => {
+        btn.classList.add('is-editing');
+        btn.onclick = (e) => {
+            e.preventDefault(); 
+            const novoLink = prompt("Cole o link (URL) ou o caminho do arquivo PDF do certificado:", btn.href);
             if (novoLink) btn.href = novoLink;
         };
     });
 }
 
 // LÓGICA DE INSERIR DADOS NOS ARRAYS VIA BOTÕES
-function editarTags(idProj) {
-    extrairDadosDaTela(); // Salva estado atual primeiro
-    const proj = listaProjetos.find(p => p.id === idProj);
-    const textoTags = prompt("Digite as tags separadas por vírgula (ex: Python, Flask):", proj.tags.join(", "));
+function editarTags(id, tipo) {
+    extrairDadosDaTela(); 
+    const listaAlvo = tipo === 'projeto' ? listaProjetos : listaCursos;
+    const item = listaAlvo.find(p => p.id === id);
+    
+    const textoTags = prompt("Digite as tags separadas por vírgula (ex: Python, Flask):", item.tags.join(", "));
     if(textoTags !== null) {
-        proj.tags = textoTags.split(",").map(t => t.trim()).filter(t => t !== "");
+        item.tags = textoTags.split(",").map(t => t.trim()).filter(t => t !== "");
         renderizarTudo();
         ativarModoEdicao();
     }
 }
 
-function editarImagemPerfil(imgElement) {
-    const novaURL = prompt("URL da nova foto de perfil:", imgElement.src);
-    if(novaURL) imgElement.src = novaURL;
-}
-
-function editarImagemProj(imgElement) {
-    const novaURL = prompt("URL da nova imagem do projeto:", imgElement.src);
+function editarImagemElemento(imgElement) {
+    const novaURL = prompt("URL da nova imagem:", imgElement.src);
     if(novaURL) imgElement.src = novaURL;
 }
 
@@ -271,11 +352,34 @@ function deletarProjeto(id, event) {
     }
 }
 
+function adicionarCurso() {
+    extrairDadosDaTela();
+    listaCursos.push({
+        id: Date.now(),
+        titulo: prompt("Nome do Curso:", "Novo Curso") || "Novo Curso",
+        resumo: "Resumo curto do curso...",
+        imagem: "img/placeholder.png",
+        tags: ["Certificado"],
+        descricaoCompleta: "Detalhes do curso, carga horária e conhecimentos adquiridos aqui...",
+        pdfLink: "#"
+    });
+    renderizarTudo();
+    ativarModoEdicao();
+}
+
+function deletarCurso(id, event) {
+    event.stopPropagation();
+    if(confirm("Excluir este curso?")) {
+        extrairDadosDaTela();
+        listaCursos = listaCursos.filter(c => c.id !== id);
+        renderizarTudo();
+        ativarModoEdicao();
+    }
+}
+
 // =========================================================
 // 5. PONTE COM O SUPABASE (Lê do Banco / Salva no Banco)
 // =========================================================
-
-// Função vital: Lê o que você alterou visualmente e joga nas Listas
 function extrairDadosDaTela() {
     dadosPerfil.nome = document.getElementById('edit-nome').innerText;
     dadosPerfil.subtitulo = document.getElementById('edit-subtitulo').innerText;
@@ -302,11 +406,28 @@ function extrairDadosDaTela() {
         }
     });
 
-    document.querySelectorAll('.modal-projeto').forEach(el => {
+    document.querySelectorAll('.curso-item').forEach(el => {
         const id = parseInt(el.getAttribute('data-id'));
-        const proj = listaProjetos.find(p => p.id === id);
-        if(proj) {
-            proj.descricaoCompleta = el.querySelector('.proj-modal-desc').innerText;
+        const curso = listaCursos.find(c => c.id === id);
+        if(curso) {
+            curso.titulo = el.querySelector('.curso-titulo').innerText;
+            curso.resumo = el.querySelector('.curso-resumo').innerText;
+            curso.imagem = el.querySelector('.projeto-img').src;
+            curso.pdfLink = el.querySelector('.curso-pdf-link').href; // Extrai o link do PDF
+        }
+    });
+
+    // Pega descrições dos modais (Cursos e Projetos)
+    document.querySelectorAll('.modal-projeto, .modal-curso').forEach(el => {
+        const id = parseInt(el.getAttribute('data-id'));
+        const isProjeto = el.classList.contains('modal-projeto');
+        
+        if (isProjeto) {
+            const proj = listaProjetos.find(p => p.id === id);
+            if(proj) proj.descricaoCompleta = el.querySelector('.projeto-modal-desc').innerText;
+        } else {
+            const curso = listaCursos.find(c => c.id === id);
+            if(curso) curso.descricaoCompleta = el.querySelector('.curso-modal-desc').innerText;
         }
     });
 }
@@ -314,14 +435,13 @@ function extrairDadosDaTela() {
 async function salvarAlteracoes() {
     document.getElementById("btnSalvarGeral").innerText = "Salvando...";
     
-    // Atualiza as listas com tudo o que foi modificado na tela
     extrairDadosDaTela(); 
-
 
     const updates = [
         { chave: 'perfil', valor: JSON.stringify(dadosPerfil) },
         { chave: 'stacks', valor: JSON.stringify(listaStacks) },
-        { chave: 'projetos', valor: JSON.stringify(listaProjetos) }
+        { chave: 'projetos', valor: JSON.stringify(listaProjetos) },
+        { chave: 'cursos', valor: JSON.stringify(listaCursos) }
     ];
 
     const { error } = await meuBanco.from('site_content').upsert(updates);
@@ -342,36 +462,14 @@ async function carregarDadosDoBanco() {
     if (data && data.length > 0) {
         data.forEach(item => {
             try {
-                // Tenta transformar o JSON de volta em Lista
                 if (item.chave === 'perfil') dadosPerfil = JSON.parse(item.valor);
                 if (item.chave === 'stacks') listaStacks = JSON.parse(item.valor);
                 if (item.chave === 'projetos') listaProjetos = JSON.parse(item.valor);
+                if (item.chave === 'cursos') listaCursos = JSON.parse(item.valor);
             } catch (e) {
-                
-                console.log("Ignorando formato de dados antigo para limpar o banco.");
+                console.log("Ignorando formato de dados antigo.");
             }
         });
-        renderizarTudo(); // Desenha a tela final com os dados que vieram
-    }
-}
-
-// =========================================================
-// 6. SEÇÃO DO BOM DIA, BOA TARDE, BOA NOITE
-// =========================================================
-
-function atualizarSaudacao() {
-    const horaAtual = new Date().getHours();
-    const textoSaudacao = document.getElementById('greeting-text');
-    const gifSaudacao = document.getElementById('greeting-gif');
-
-    if (horaAtual >= 5 && horaAtual < 12) {
-        textoSaudacao.innerText = "Bom dia!";
-        gifSaudacao.src = "img/gifs/morning.gif"; 
-    } else if (horaAtual >= 12 && horaAtual < 18) {
-        textoSaudacao.innerText = "Boa tarde!";
-        gifSaudacao.src = "img/gifs/morning.gif";
-    } else {
-        textoSaudacao.innerText = "Boa noite!";
-        gifSaudacao.src = "img/gifs/good-night.gif";
+        renderizarTudo(); 
     }
 }
