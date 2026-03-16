@@ -231,6 +231,6 @@ section {
 .greeting-text {
     color: var(--cor-principal);
     font-weight: bold;
-    font-size: 1.3rem;
+    font-size: 2.3rem;
     margin-top: 5px;
 }
